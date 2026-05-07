@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Прототип ИС - Учебный процесс</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Скрытие элементов для логики переключения */
+        .hidden-tab { display: none; }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans h-screen overflow-hidden flex">
+
+    <div id="auth-screen" class="w-full h-full flex items-center justify-center absolute inset-0 bg-gray-100 z-50 transition-opacity">
+        <div class="bg-white p-8 rounded-xl shadow-lg w-96">
+            <div class="text-center mb-6">
+                <h1 class="text-2xl font-bold text-indigo-900">EduSystem</h1>
+                <p class="text-sm text-gray-500 mt-1" id="auth-subtitle">Вход в систему</p>
+            </div>
+
+            <div id="login-form" class="space-y-4">
+                <div class="p-3 bg-blue-50 text-blue-800 text-xs rounded-lg border border-blue-100 mb-4">
+                    <b>Учетные данные для проверки:</b><br>
+                    Админ: <b>admin</b> / <b>admin</b><br>
+                    Студент: <b>student</b> / <b>student</b>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Логин</label>
+                    <input type="text" id="login-username" class="mt-1 w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Пароль</label>
+                    <input type="password" id="login-password" class="mt-1 w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none">
+                </div>
+                <button onclick="handleLogin()" class="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition font-medium">Войти</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="main-app" class="w-full h-full flex hidden">
+        
+        <aside class="w-64 bg-indigo-900 text-white flex flex-col shadow-xl z-20">
+            <div class="p-6 text-center border-b border-indigo-800">
+                <h1 class="text-2xl font-bold tracking-wider">EduSystem</h1>
+                <p class="text-indigo-300 text-sm mt-1" id="user-role-label">Роль</p>
+            </div>
+            
+            <nav class="flex-1 px-4 py-6 space-y-2">
+                <div id="nav-admin" class="hidden space-y-2">
+                    <button onclick="switchTab('tab-admin-users')" class="w-full flex items-center gap-3 text-left hover:bg-indigo-800 px-4 py-3 rounded-lg transition-colors focus:bg-indigo-800">
+                        <i class="fas fa-users w-5"></i> База пользователей
+                    </button>
+                    <button onclick="switchTab('tab-admin-schedule')" class="w-full flex items-center gap-3 text-left hover:bg-indigo-800 px-4 py-3 rounded-lg transition-colors focus:bg-indigo-800">
+                        <i class="fas fa-calendar-alt w-5"></i> Расписание занятий
+                    </button>
+                </div>
+                
+                <div id="nav-student" class="hidden space-y-2">
+                    <button onclick="switchTab('tab-student-schedule')" class="w-full flex items-center gap-3 text-left hover:bg-indigo-800 px-4 py-3 rounded-lg transition-colors focus:bg-indigo-800">
+                        <i class="fas fa-calendar w-5"></i> Мое расписание
+                    </button>
+                    <button onclick="switchTab('tab-student-grades')" class="w-full flex items-center gap-3 text-left hover:bg-indigo-800 px-4 py-3 rounded-lg transition-colors focus:bg-indigo-800">
+                        <i class="fas fa-graduation-cap w-5"></i> Моя успеваемость
+                    </button>
+                    <button onclick="switchTab('tab-student-docs')" class="w-full flex items-center gap-3 text-left hover:bg-indigo-800 px-4 py-3 rounded-lg transition-colors focus:bg-indigo-800">
+                        <i class="fas fa-file-alt w-5"></i> Заказ справок
+                    </button>
+                </div>
+            </nav>
+
+            <div class="p-4 border-t border-indigo-800">
+                <button onclick="logout()" class="w-full flex items-center justify-center gap-2 bg-red-500 hover:bg-red-600 px-4 py-2 rounded text-sm transition">
+                    <i class="fas fa-sign-out-alt"></i> Выйти
+                </button>
+            </div>
+        </aside>
+
+        <main class="flex-1 flex flex-col bg-gray-50 overflow-y-auto">
+            <header class="bg-white shadow-sm px-8 py-4 flex justify-between items-center sticky top-0 z-10">
+                <div class="text-xl font-semibold text-gray-700" id="page-title">Рабочий стол</div>
+                <div class="flex items-center gap-2 border-l pl-4">
+                    <div class="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold" id="user-avatar">?</div>
+                    <span class="text-sm font-medium" id="user-name">Пользователь</span>
+                </div>
+            </header>
+
+            <div class="p-8">
+                
+                <div id="tab-admin-users" class="hidden-tab">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100">
+                        <div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50 rounded-t-xl">
+                            <h2 class="font-semibold text-gray-700">База данных пользователей</h2>
+                            <button onclick="document.getElementById('addModal').classList.remove('hidden')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2">
+                                <i class="fas fa-plus"></i> Добавить
+                            </button>
+                        </div>
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-white border-b text-gray-500 text-xs uppercase">
+                                    <th class="px-6 py-4">ID</th>
+                                    <th class="px-6 py-4">ФИО</th>
+                                    <th class="px-6 py-4">Роль</th>
+                                    <th class="px-6 py-4 text-right">Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody id="db-table-body" class="text-sm text-gray-700 divide-y divide-gray-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="tab-admin-schedule" class="hidden-tab">
+                    <div class="grid grid-cols-3 gap-6">
+                        <div class="col-span-1 bg-white rounded-xl shadow-sm border border-gray-100 p-6 h-fit">
+                            <h3 class="font-semibold text-gray-800 mb-4">Добавить занятие</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-xs text-gray-500 mb-1">День недели</label>
+                                    <select id="sch-day" class="w-full border rounded px-3 py-2 text-sm outline-none focus:border-indigo-500">
+                                        <option>Понедельник</option><option>Вторник</option><option>Среда</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-gray-500 mb-1">Время и Дисциплина</label>
+                                    <input type="text" id="sch-subj" placeholder="09:00 - Базы данных" class="w-full border rounded px-3 py-2 text-sm outline-none focus:border-indigo-500">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-gray-500 mb-1">Аудитория</label>
+                                    <input type="text" id="sch-room" placeholder="Ауд. 315" class="w-full border rounded px-3 py-2 text-sm outline-none focus:border-indigo-500">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-gray-500 mb-1">Группа</label>
+                                    <input type="text" id="sch-group" placeholder="ИС-22" class="w-full border rounded px-3 py-2 text-sm outline-none focus:border-indigo-500">
+                                </div>
+                                <button onclick="addSchedule()" class="w-full bg-green-600 text-white py-2 rounded text-sm font-medium hover:bg-green-700">Добавить в сетку</button>
+                            </div>
+                        </div>
+                        
+                        <div class="col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                            <div class="px-6 py-4 border-b bg-gray-50"><h2 class="font-semibold text-gray-700">Глобальная сетка расписания</h2></div>
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-white border-b text-gray-500 text-xs uppercase">
+                                        <th class="px-6 py-4">День</th>
+                                        <th class="px-6 py-4">Дисциплина</th>
+                                        <th class="px-6 py-4">Группа</th>
+                                        <th class="px-6 py-4">Аудитория</th>
+                                        <th class="px-6 py-4 text-right">Удалить</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="admin-schedule-body" class="text-sm text-gray-700 divide-y divide-gray-100"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="tab-student-schedule" class="hidden-tab">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100">
+                        <div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50 rounded-t-xl">
+                            <h2 class="font-semibold text-gray-700">Расписание группы ИС-22</h2>
+                            <span class="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded font-medium">Текущая неделя</span>
+                        </div>
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-white border-b text-gray-500 text-xs uppercase">
+                                    <th class="px-6 py-4 border-r">День недели</th>
+                                    <th class="px-6 py-4 border-r">Время / Предмет</th>
+                                    <th class="px-6 py-4">Аудитория</th>
+                                </tr>
+                            </thead>
+                            <tbody id="student-schedule-body" class="text-sm text-gray-700 divide-y divide-gray-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="tab-student-grades" class="hidden-tab">
+                    <div class="grid grid-cols-4 gap-4 mb-6">
+                        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 text-center border-b-4 border-indigo-500">
+                            <p class="text-xs text-gray-500 uppercase">Средний балл</p>
+                            <p class="text-2xl font-bold text-gray-800">4.8</p>
+                        </div>
+                        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 text-center border-b-4 border-green-500">
+                            <p class="text-xs text-gray-500 uppercase">Долгов</p>
+                            <p class="text-2xl font-bold text-gray-800">0</p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100">
+                        <div class="px-6 py-4 border-b bg-gray-50 rounded-t-xl"><h2 class="font-semibold text-gray-700">Электронная зачетка</h2></div>
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-white border-b text-gray-500 text-xs uppercase">
+                                    <th class="px-6 py-4">Дисциплина</th>
+                                    <th class="px-6 py-4">Тип контроля</th>
+                                    <th class="px-6 py-4 text-right">Оценка / Балл</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-sm text-gray-700 divide-y divide-gray-100">
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 font-medium">Базы данных</td>
+                                    <td class="px-6 py-4 text-gray-500">Экзамен</td>
+                                    <td class="px-6 py-4 text-right"><span class="bg-green-100 text-green-700 px-2 py-1 rounded font-bold">Отлично (5)</span></td>
+                                </tr>
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 font-medium">Разработка мобильных приложений</td>
+                                    <td class="px-6 py-4 text-gray-500">Диф. зачет</td>
+                                    <td class="px-6 py-4 text-right"><span class="bg-green-100 text-green-700 px-2 py-1 rounded font-bold">Отлично (5)</span></td>
+                                </tr>
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 font-medium">Иностранный язык</td>
+                                    <td class="px-6 py-4 text-gray-500">Зачет</td>
+                                    <td class="px-6 py-4 text-right"><span class="bg-blue-100 text-blue-700 px-2 py-1 rounded font-bold">Зачтено</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="tab-student-docs" class="hidden-tab">
+                    <div class="grid grid-cols-2 gap-6">
+                        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 h-fit">
+                            <h3 class="font-semibold text-gray-800 mb-4">Оформить новую заявку</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm text-gray-700 mb-1">Тип документа</label>
+                                    <select id="doc-type" class="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:border-indigo-500">
+                                        <option>Справка об обучении (в военкомат)</option>
+                                        <option>Справка об обучении (по месту требования)</option>
+                                        <option>Справка-вызов на сессию</option>
+                                    </select>
+                                </div>
+                                <button onclick="orderDoc()" class="w-full bg-indigo-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-indigo-700">Отправить запрос в деканат</button>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                            <div class="px-6 py-4 border-b bg-gray-50"><h3 class="font-semibold text-gray-700">История запросов</h3></div>
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-white border-b text-gray-500 text-xs uppercase">
+                                        <th class="px-6 py-4">Документ</th>
+                                        <th class="px-6 py-4 text-right">Статус</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="docs-history-body" class="text-sm text-gray-700 divide-y divide-gray-100">
+                                    <tr>
+                                        <td class="px-6 py-4">Справка об обучении<br><span class="text-xs text-gray-400">12.04.2026</span></td>
+                                        <td class="px-6 py-4 text-right"><span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs">Выдана</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <div id="addModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden flex items-center justify-center z-50">
+        <div class="bg-white rounded-xl shadow-2xl w-96 overflow-hidden">
+            <div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
+                <h3 class="font-semibold text-gray-800">Новый пользователь</h3>
+                <button onclick="document.getElementById('addModal').classList.add('hidden')" class="text-gray-400 hover:text-red-500"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="p-6 space-y-4">
+                <input type="text" id="db-name" class="w-full border rounded-lg px-3 py-2 text-sm outline-none" placeholder="ФИО">
+                <select id="db-role" class="w-full border rounded-lg px-3 py-2 text-sm outline-none">
+                    <option value="Студент">Студент</option>
+                    <option value="Преподаватель">Преподаватель</option>
+                </select>
+            </div>
+            <div class="px-6 py-4 bg-gray-50 flex justify-end gap-3">
+                <button onclick="document.getElementById('addModal').classList.add('hidden')" class="px-4 py-2 border rounded-lg text-sm">Отмена</button>
+                <button onclick="addUserToDB()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm">Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Имитация БД
+        let usersDB = [
+            { id: 1, name: "Вяльцев М.А.", role: "Студент" },
+            { id: 2, name: "Смирнов А.П.", role: "Преподаватель" }
+        ];
+        let nextUserId = 3;
+
+        let scheduleDB = [
+            { id: 1, day: "Понедельник", subj: "09:00 - Базы данных", room: "Ауд. 315", group: "ИС-22" },
+            { id: 2, day: "Вторник", subj: "10:40 - Разработка ПО", room: "Ауд. 102", group: "ИС-22" }
+        ];
+        let nextSchId = 3;
+
+        // Вход
+        function handleLogin() {
+            const user = document.getElementById('login-username').value;
+            const pass = document.getElementById('login-password').value;
+
+            if (user === 'admin' && pass === 'admin') {
+                initApp('Администратор', 'А', 'nav-admin', 'tab-admin-users', 'Управление базой данных');
+                renderUsersTable();
+                renderScheduleTable();
+            } else if (user === 'student' && pass === 'student') {
+                initApp('Студент', 'С', 'nav-student', 'tab-student-schedule', 'Мое расписание');
+                renderScheduleTable();
+            } else {
+                alert("Ошибка: Неверный логин или пароль!");
+            }
+        }
+
+        // Инициализация интерфейса
+        function initApp(roleName, avatarL, navId, defaultTabId, title) {
+            document.getElementById('auth-screen').classList.add('hidden');
+            document.getElementById('main-app').classList.remove('hidden');
+            
+            document.getElementById('user-role-label').innerText = "Роль: " + roleName;
+            document.getElementById('user-name').innerText = roleName;
+            document.getElementById('user-avatar').innerText = avatarL;
+
+            // Скрываем меню
+            document.getElementById('nav-admin').classList.add('hidden');
+            document.getElementById('nav-student').classList.add('hidden');
+            
+            // Показываем меню для роли
+            document.getElementById(navId).classList.remove('hidden');
+
+            switchTab(defaultTabId);
+        }
+
+        function logout() {
+            document.getElementById('auth-screen').classList.remove('hidden');
+            document.getElementById('main-app').classList.add('hidden');
+        }
+
+        // Переключение вкладок
+        function switchTab(tabId) {
+            // Скрыть все вкладки
+            document.querySelectorAll('.hidden-tab').forEach(el => el.style.display = 'none');
+            // Показать нужную
+            document.getElementById(tabId).style.display = 'block';
+
+            // Обновляем заголовок страницы в зависимости от вкладки
+            const titles = {
+                'tab-admin-users': 'Управление базой данных',
+                'tab-admin-schedule': 'Редактирование расписания',
+                'tab-student-schedule': 'Расписание занятий',
+                'tab-student-grades': 'Успеваемость',
+                'tab-student-docs': 'Единое окно (Документы)'
+            };
+            document.getElementById('page-title').innerText = titles[tabId];
+        }
+
+        /* --- Логика Администратора (БД) --- */
+        function renderUsersTable() {
+            const tbody = document.getElementById('db-table-body');
+            tbody.innerHTML = '';
+            usersDB.forEach(r => {
+                const color = r.role === 'Студент' ? 'blue' : 'green';
+                tbody.innerHTML += `
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 text-gray-500">#00${r.id}</td>
+                        <td class="px-6 py-4 font-medium">${r.name}</td>
+                        <td class="px-6 py-4"><span class="bg-${color}-100 text-${color}-700 px-2 py-1 rounded text-xs">${r.role}</span></td>
+                        <td class="px-6 py-4 text-right">
+                            <button onclick="deleteUser(${r.id})" class="text-red-500 p-2"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>`;
+            });
+        }
+        function addUserToDB() {
+            const name = document.getElementById('db-name').value;
+            const role = document.getElementById('db-role').value;
+            if(!name) return alert("Введите ФИО!");
+            usersDB.push({ id: nextUserId++, name: name, role: role });
+            document.getElementById('addModal').classList.add('hidden');
+            renderUsersTable();
+        }
+        function deleteUser(id) {
+            usersDB = usersDB.filter(r => r.id !== id);
+            renderUsersTable();
+        }
+
+        /* --- Логика Расписания (Общая) --- */
+        function renderScheduleTable() {
+            const adminTbody = document.getElementById('admin-schedule-body');
+            const studentTbody = document.getElementById('student-schedule-body');
+            adminTbody.innerHTML = '';
+            studentTbody.innerHTML = '';
+
+            scheduleDB.forEach(item => {
+                // Для админа
+                adminTbody.innerHTML += `
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4">${item.day}</td>
+                        <td class="px-6 py-4 font-medium">${item.subj}</td>
+                        <td class="px-6 py-4">${item.group}</td>
+                        <td class="px-6 py-4">${item.room}</td>
+                        <td class="px-6 py-4 text-right"><button onclick="deleteSchedule(${item.id})" class="text-red-500"><i class="fas fa-times"></i></button></td>
+                    </tr>`;
+                
+                // Для студента (Фильтр по ИС-22)
+                if(item.group === 'ИС-22') {
+                    studentTbody.innerHTML += `
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 border-r font-medium">${item.day}</td>
+                            <td class="px-6 py-4 border-r">${item.subj}</td>
+                            <td class="px-6 py-4">${item.room}</td>
+                        </tr>`;
+                }
+            });
+        }
+        function addSchedule() {
+            const day = document.getElementById('sch-day').value;
+            const subj = document.getElementById('sch-subj').value;
+            const room = document.getElementById('sch-room').value;
+            const group = document.getElementById('sch-group').value;
+            if(!subj || !room || !group) return alert("Заполните все поля!");
+
+            scheduleDB.push({ id: nextSchId++, day, subj, room, group });
+            renderScheduleTable();
+            document.getElementById('sch-subj').value = '';
+            document.getElementById('sch-room').value = '';
+        }
+        function deleteSchedule(id) {
+            scheduleDB = scheduleDB.filter(s => s.id !== id);
+            renderScheduleTable();
+        }
+
+        /* --- Логика Студента (Справки) --- */
+        function orderDoc() {
+            const type = document.getElementById('doc-type').value;
+            const tbody = document.getElementById('docs-history-body');
+            
+            // Получаем сегодняшнюю дату
+            const today = new Date().toLocaleDateString('ru-RU');
+
+            tbody.innerHTML = `
+                <tr class="bg-indigo-50 transition">
+                    <td class="px-6 py-4">${type}<br><span class="text-xs text-gray-500">${today}</span></td>
+                    <td class="px-6 py-4 text-right"><span class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-xs">В обработке</span></td>
+                </tr>
+            ` + tbody.innerHTML;
+            
+            alert('Запрос успешно отправлен в деканат!');
+        }
+    </script>
+</body>
+</html>ad
